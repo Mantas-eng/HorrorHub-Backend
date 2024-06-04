@@ -1,11 +1,5 @@
 require('dotenv').config();
 
-console.log('Environment Variables:');
-console.log('MONGO_URL:', process.env.MONGO_URL);
-console.log('PORT:', process.env.PORT);
-console.log('SECRET_KEY:', process.env.SECRET_KEY);
-
-
 const express = require('express');
 const next = require('next');
 const mongoose = require('mongoose');
@@ -16,10 +10,8 @@ const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-// Assign environment variables directly without specifying types
 const PORT = process.env.PORT || 3000;
 const MONGO_URL = process.env.MONGO_URL;
-const SECRET_KEY = process.env.SECRET_KEY;
 
 const corsOptions = {
   origin: ['https://localhost:3000'],
@@ -44,7 +36,7 @@ app.prepare().then(() => {
   });
 
   mongoose
-    .connect(MONGO_URL,)
+    .connect(MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true })
     .then(() => {
       console.log('Connected to MongoDB');
       server.listen(PORT, '0.0.0.0', (err) => {
