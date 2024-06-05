@@ -11,11 +11,11 @@ const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT;
 const MONGO_URL = process.env.MONGO_URL;
-
+require("dotenv").config
 const corsOptions = {
-  origin: ['http://localhost:8080', 'https://horror-hub-website.vercel.app'],
+  origin: ['http://localhost:8080'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -33,7 +33,7 @@ app.prepare().then(() => {
   });
 
   mongoose
-    .connect(MONGO_URL, { useNewUrlParser: true, useUnifiedTopology: true })
+    .connect(MONGO_URL)
     .then(() => {
       console.log('Connected to MongoDB');
       server.listen(PORT, (err) => {
