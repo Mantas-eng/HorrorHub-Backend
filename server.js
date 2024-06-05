@@ -15,7 +15,7 @@ const PORT = process.env.PORT;
 const MONGO_URL = process.env.MONGO_URL;
 require("dotenv").config
 const corsOptions = {
-  origin: ['http://localhost:8080'],
+  origin: ['http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
