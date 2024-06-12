@@ -8,7 +8,10 @@ const movieSchema = mongoose.Schema({
   film_image: {type:String, required:true},
   film_image_width:{type:String, required:true},
   film_image_height:{type:String, required:true},
-  film_trailer: {type:String, required:true}
+  film_cover: {type:String, required:true},
+  film_cover_width:{type:String, required:true},
+  film_cover_height:{type:String, required:true},
+  film_trailer: {type:String, required:true},
 });
 
 module.exports = mongoose.model("Movie", movieSchema);
