@@ -4,9 +4,15 @@ const movieController = require('../Controllers/movieController');
 const authController = require('../Controllers/authController'); 
 const authMiddleware = require('../middleware/authMiddleware');
 const authverifyToken = require ('../middleware/authMiddleware');
-
+const favoriteMoviesController = require('../Controllers/favoriteMovieController');
+const favoriteMovies = require('../models/favoriteMovies');
 router.get('/movies', movieController.getAllMovies);
 router.get('/movies/:id', movieController.getMovieById);
+router.get('/favoritemovies', favoriteMoviesController.getAllMovies);
+router.get('/favoritemovies/:id',favoriteMoviesController.getMovieById);
+router.post('/favoritemovies',favoriteMoviesController.createMovie);
+router.put('/favoritemovies/:id',favoriteMoviesController.updateMovie);
+router.delete('/favoritemovies/:id',favoriteMoviesController.deleteMovie);
 router.post('/movies', movieController.createMovie);
 router.put('/movies/:id', movieController.updateMovie);
 router.delete('/movies/:id', movieController.deleteMovie);
