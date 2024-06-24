@@ -1,62 +1,62 @@
-const FavoriteMovie = require('../models/favoriteMovies');
+const FavoriteMovie = require('../models/favoriteMovie');
 
 const favoriteMoviesController = {
-  getAllMovies: async (req, res) => {
+  getAllFavoriteMovies: async (req, res) => {
     try {
       const favoriteMovies = await FavoriteMovie.find();
       res.json({ favoriteMovies });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: 'Error fetching favorite movies: ' + error.message });
     }
   },
 
-  getMovieById: async (req, res) => {
+  getFavoriteMovieById: async (req, res) => {
     const { id } = req.params;
     try {
       const favoriteMovie = await FavoriteMovie.findById(id);
       if (!favoriteMovie) {
-        return res.status(404).json({ message: 'Favorite Movie not found' });
+        return res.status(404).json({ message: 'Favorite movie not found' });
       }
       res.json({ favoriteMovie });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: 'Error fetching favorite movie: ' + error.message });
     }
   },
 
-  createMovie: async (req, res) => {
-    const newMovie = req.body;
+  createFavoriteMovie: async (req, res) => {
+    const newFavoriteMovie = req.body;
     try {
-      const favoriteMovie = await FavoriteMovie.create(newMovie);
+      const favoriteMovie = await FavoriteMovie.create(newFavoriteMovie);
       res.status(201).json({ favoriteMovie });
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: 'Error creating favorite movie: ' + error.message });
     }
   },
 
-  updateMovie: async (req, res) => {
+  updateFavoriteMovie: async (req, res) => {
     const { id } = req.params;
-    const updatedMovie = req.body;
+    const updatedFavoriteMovie = req.body;
     try {
-      const favoriteMovie = await FavoriteMovie.findByIdAndUpdate(id, updatedMovie, { new: true });
+      const favoriteMovie = await FavoriteMovie.findByIdAndUpdate(id, updatedFavoriteMovie, { new: true });
       if (!favoriteMovie) {
-        return res.status(404).json({ message: 'Favorite Movie not found' });
+        return res.status(404).json({ message: 'Favorite movie not found' });
       }
       res.json({ favoriteMovie });
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: 'Error updating favorite movie: ' + error.message });
     }
   },
 
-  deleteMovie: async (req, res) => {
+  deleteFavoriteMovie: async (req, res) => {
     const { id } = req.params;
     try {
       const favoriteMovie = await FavoriteMovie.findByIdAndDelete(id);
       if (!favoriteMovie) {
-        return res.status(404).json({ message: 'Favorite Movie not found' });
+        return res.status(404).json({ message: 'Favorite movie not found' });
       }
       res.status(204).end();
     } catch (error) {
-      res.status(400).json({ message: error.message });
+      res.status(400).json({ message: 'Error deleting favorite movie: ' + error.message });
     }
   }
 };
