@@ -3,7 +3,7 @@ const router = express.Router();
 const movieController = require('../Controllers/movieController');
 const authController = require('../Controllers/authController'); 
 const authMiddleware = require('../middleware/authMiddleware');
-const authverifyToken = require ('../middleware/authMiddleware');
+const authorizeAdmin = require('../middleware/authorizeAdmin');
 const favoriteMoviesController = require('../Controllers/favoriteMovieController');
 router.get('/movies', movieController.getAllMovies);
 router.get('/movies/:id', movieController.getMovieById);
@@ -14,10 +14,10 @@ router.put('/favoritemovies/:id',favoriteMoviesController.updateMovie);
 router.delete('/favoritemovies/:id',favoriteMoviesController.deleteMovie);
 router.post('/movies', movieController.createMovie);
 router.put('/movies/:id', movieController.updateMovie);
-router.delete('/movies/:id', movieController.deleteMovie);
+router.delete('/movies/:id', movieController.deleteMovie);  
 router.post('/login', authController.login);
 router.post('/register', authController.register);
-router.get('/userData', authverifyToken, (req, res) => {
+router.get('/userData', authMiddleware, (req, res) => {
     const userData = {
         username: req.user.username,
         password: req.user.password
@@ -28,4 +28,7 @@ router.get('/protected-route', authMiddleware, (req, res) => {
     res.json({ message: 'You are authenticated.' });
   });
 
+  router.get('/admin-only', authMiddleware, authorizeAdmin, (req, res) => {
+    res.json({ message: 'Admins only route.' });
+});
 module.exports = router;
