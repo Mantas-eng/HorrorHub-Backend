@@ -1,6 +1,15 @@
-const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,  
+    pass: process.env.EMAIL_PASS  
+  }
+});
 
 const authController = {
   login: async (req, res) => {
@@ -52,22 +61,25 @@ const authController = {
 
       const hashedPassword = await bcrypt.hash(password, 10);
 
+      const verificationToken = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1d' });
+
       const newUser = new User({
         username,
         email,
         password: hashedPassword,
-        role: 'user' 
+        role: 'user',
+        verificationToken
       });
       await newUser.save();
 
-      const token = jwt.sign(
-        { userId: newUser._id, role: newUser.role },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-      );
+      const emailSent = await sendVerificationEmail(email, verificationToken);
+
+      if (!emailSent) {
+        throw new Error('Failed to send verification email');
+      }
 
       res.status(201).json({
-        token,
+        message: 'Registration successful. Verification email sent.',
         user: { id: newUser._id, username: newUser.username, email: newUser.email, role: newUser.role }
       });
     } catch (error) {
@@ -75,6 +87,27 @@ const authController = {
         message: error.message
       });
     }
+  }
+};
+
+const sendVerificationEmail = async (email, verificationToken) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,  
+      to: email,             
+      subject: 'Patvirtinkite savo el. paštą',
+      html: `
+        <p>Prašome paspausti šią nuorodą norėdami patvirtinti savo el. paštą:</p>
+        <p><a href="http://horrorhub-backend.onrender.com/verify/${verificationToken}">Patvirtinti el. paštą</a></p>
+      `
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('El. laiškas išsiųstas: ', info.response);
+    return true;
+  } catch (error) {
+    console.error('Nepavyko išsiųsti el. laiško: ', error);
+    return false;
   }
 };
 
