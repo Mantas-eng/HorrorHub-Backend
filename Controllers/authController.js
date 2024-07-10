@@ -24,24 +24,26 @@ transporter.verify((error, success) => {
 });
 
 const sendVerificationEmail = async ({ _id, email, verificationToken }) => {
-  const currentUrl = 'https://horrorhub-backend-3.onrender.com/verify/:userId/:uniqueString';
-  const uniqueString = uuidv4() + _id;
-
+  const currentUrl = 'https://horrorhub-backend-3.onrender.com/verify'; // Bazinis URL
   const mailOptions = {
     from: process.env.AUTH_USER,
     to: email,
     subject: 'Verify Your Email',
-    html: `<p>Verify your email address to complete the signup and login into your account.</p><p>This link <b>expires in 6 hours</b>.</p><p>Press <a href="${currentUrl + _id + "/" + uniqueString}">here</a> to proceed.</p>`,
+    html: `
+      <p>Verify your email address to complete the signup and login into your account.</p>
+      <p>This link <b>expires in 6 hours</b>.</p>
+      <p>Press <a href="${currentUrl}/${_id}/${verificationToken}">here</a> to proceed.</p>
+    `,
   };
 
   const saltRounds = 10;
-  const hashedUniqueString = await bcrypt.hash(uniqueString, saltRounds);
+  const hashedUniqueString = await bcrypt.hash(verificationToken, saltRounds);
 
   const newVerification = new UserVerification({
     userId: _id,
     uniqueString: hashedUniqueString,
     createdAt: Date.now(),
-    expiresAt: Date.now() + 21600000, // 6 hours expiration
+    expiresAt: Date.now() + 21600000, // 6 valandų galiojimo laikas
   });
 
   await newVerification.save();
@@ -54,6 +56,7 @@ const sendVerificationEmail = async ({ _id, email, verificationToken }) => {
     return { success: false, message: 'Failed to send verification email' };
   }
 };
+
 
 const authController = {
   login: async (req, res) => {
