@@ -40,6 +40,5 @@ router.get('/admin-only', authMiddleware, authorizeAdmin, (req, res) => {
     res.json({ message: 'Admins only route.' });
 });
 
-router.get('/verify-email', authController.verifyEmail);
 
 module.exports = router;

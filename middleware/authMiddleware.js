@@ -31,8 +31,8 @@ const authMiddleware = async (req, res, next) => {
             return res.status(401).json({
               message: 'Email not verified'
             });
-        }
-
+          }
+          
         req.user = {
             id: user._id,
             username: user.username,
