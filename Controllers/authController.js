@@ -23,7 +23,7 @@ transporter.verify((error, success) => {
   }
 });
 
-const sendVerificationEmail = async ({ _id, email }) => {
+const sendVerificationEmail = async ({ _id, email, verificationToken }) => {
   const currentUrl = 'https://horrorhub-backend-3.onrender.com/verify/:userId/:uniqueString';
   const uniqueString = uuidv4() + _id;
 
@@ -104,16 +104,19 @@ const authController = {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
+      const verificationToken = uuidv4(); // Generuojame unikalų patvirtinimo žetoną
       const newUser = new User({
         username,
         email,
         password: hashedPassword,
         role: 'user',
-        verified: false
+        verified: false,
+        verificationToken // Išsaugome žetoną duomenų bazėje
       });
 
       await newUser.save();
 
+      // Siunčiame patvirtinimo el. laišką
       const { success, message } = await sendVerificationEmail(newUser);
 
       if (!success) {
@@ -165,5 +168,7 @@ const authController = {
     }
   }
 };
+
+
 
 module.exports = authController;
