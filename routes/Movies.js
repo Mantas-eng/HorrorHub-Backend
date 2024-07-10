@@ -5,6 +5,7 @@ const authController = require('../Controllers/authController');
 const authMiddleware = require('../middleware/authMiddleware');
 const authorizeAdmin = require('../middleware/authorizeAdmin');
 const favoriteMoviesController = require('../Controllers/favoriteMovieController');
+const verificationController = require('../Controllers/verificationController');
 
 router.get('/movies', movieController.getAllMovies);
 router.get('/movies/:id', movieController.getMovieById);
@@ -39,5 +40,8 @@ router.get('/protected-route', authMiddleware, (req, res) => {
 router.get('/admin-only', authMiddleware, authorizeAdmin, (req, res) => {
     res.json({ message: 'Admins only route.' });
 });
+
+router.get('/verify/:token', verificationController.verifyEmail);
+
 
 module.exports = router;
