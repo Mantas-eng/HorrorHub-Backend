@@ -165,12 +165,23 @@ const authController = {
       await user.save();
       await UserVerification.deleteOne({ userId });
 
-      res.status(200).json({ message: 'Account verified successfully' });
+      const token = jwt.sign(
+        { userId: user._id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
+
+      res.status(200).json({
+        message: 'Account verified successfully',
+        token,
+        user: { id: user._id, username: user.username, email: user.email, role: user.role }
+      });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   }
 };
+
 
 
 
