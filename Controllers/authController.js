@@ -8,11 +8,6 @@ require('dotenv').config();
 
 let transporter = nodemailer.createTransport({
   service: 'gmail',
-  port: 465,
-  secure: true,
-  logger: true,
-  debug: true,
-  secureConnection: false,
   auth: {
     user: process.env.AUTH_USER,
     pass: process.env.AUTH_PASS
@@ -28,8 +23,8 @@ transporter.verify((error, success) => {
   }
 });
 
-const sendVerificationEmail = ({ _id, email }, res) => {
-  const currentUrl = 'http://localhost:8080/api/verify/';
+const sendVerificationEmail = async ({ _id, email }) => {
+  const currentUrl = 'https://horrorhub-backend-3.onrender.com/verify/:userId/:uniqueString';
   const uniqueString = uuidv4() + _id;
 
   const mailOptions = {
@@ -40,45 +35,24 @@ const sendVerificationEmail = ({ _id, email }, res) => {
   };
 
   const saltRounds = 10;
-  bcrypt.hash(uniqueString, saltRounds).then((hashedUniqueString) => {
-    const newVerification = new UserVerification({
-      userId: _id,
-      uniqueString: hashedUniqueString,
-      createdAt: Date.now(),
-      expiresAt: Date.now() + 21600000,
-    });
+  const hashedUniqueString = await bcrypt.hash(uniqueString, saltRounds);
 
-    newVerification.save()
-      .then(() => {
-        transporter.sendMail(mailOptions)
-          .then(() => {
-            res.json({
-              status: "PENDING",
-              message: "Verification email sent",
-            });
-          })
-          .catch((error) => {
-            console.log(error);
-            res.json({
-              status: "FAILED",
-              message: "Verification email failed",
-            });
-          });
-      })
-      .catch((error) => {
-        console.log(error);
-        res.json({
-          status: "FAILED",
-          message: "Couldn't save verification email data!",
-        });
-      });
-  }).catch((error) => {
-    console.log(error);
-    res.json({
-      status: "FAILED",
-      message: "An error occurred while hashing email data!",
-    });
+  const newVerification = new UserVerification({
+    userId: _id,
+    uniqueString: hashedUniqueString,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + 21600000, // 6 hours expiration
   });
+
+  await newVerification.save();
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return { success: true, message: 'Verification email sent' };
+  } catch (error) {
+    console.error('Error sending email:', error);
+    return { success: false, message: 'Failed to send verification email' };
+  }
 };
 
 const authController = {
@@ -137,18 +111,17 @@ const authController = {
         role: 'user',
         verified: false
       });
+
       await newUser.save();
 
-      const token = jwt.sign(
-        { userId: newUser._id, role: newUser.role },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-      );
+      const { success, message } = await sendVerificationEmail(newUser);
 
-      sendVerificationEmail(newUser, res);
+      if (!success) {
+        return res.status(500).json({ message });
+      }
 
       res.status(201).json({
-        token,
+        message: 'User registered successfully. Please check your email for verification.',
         user: { id: newUser._id, username: newUser.username, email: newUser.email, role: newUser.role }
       });
     } catch (error) {
@@ -162,18 +135,17 @@ const authController = {
     const { userId, uniqueString } = req.params;
 
     try {
-      const userVerification = await UserVerification.find({ userId });
-      if (userVerification.length === 0) {
+      const userVerification = await UserVerification.findOne({ userId });
+      if (!userVerification) {
         return res.status(400).json({ message: 'Invalid or expired verification token' });
       }
 
-      const verificationRecord = userVerification[0];
-      if (verificationRecord.expiresAt < Date.now()) {
+      if (userVerification.expiresAt < Date.now()) {
         await UserVerification.deleteOne({ userId });
         return res.status(400).json({ message: 'Verification token has expired. Please request a new one.' });
       }
 
-      const isMatch = await bcrypt.compare(uniqueString, verificationRecord.uniqueString);
+      const isMatch = await bcrypt.compare(uniqueString, userVerification.uniqueString);
       if (!isMatch) {
         return res.status(400).json({ message: 'Invalid or expired verification token' });
       }
