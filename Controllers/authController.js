@@ -87,6 +87,38 @@ const authController = {
         message: error.message
       });
     }
+  },
+
+  verifyEmail: async (req, res) => {
+    const { token } = req.query;
+
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findOne({ email: decoded.email });
+
+      if (!user) {
+        return res.status(400).json({
+          message: 'Invalid token or user not found'
+        });
+      }
+
+      if (user.isVerified) {
+        return res.status(400).json({
+          message: 'Email is already verified'
+        });
+      }
+
+      user.isVerified = true;
+      await user.save();
+
+      res.status(200).json({
+        message: 'Email successfully verified'
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: 'Email verification failed'
+      });
+    }
   }
 };
 
@@ -98,7 +130,7 @@ const sendVerificationEmail = async (email, verificationToken) => {
       subject: 'Patvirtinkite savo el. paštą',
       html: `
         <p>Prašome paspausti šią nuorodą norėdami patvirtinti savo el. paštą:</p>
-        <p><a href="http://horrorhub-backend.onrender.com/verify/${verificationToken}">Patvirtinti el. paštą</a></p>
+        <p><a href="http://horrorhub-backend.onrender.com/verify-email?token=${verificationToken}">Patvirtinti el. paštą</a></p>
       `
     };
 
