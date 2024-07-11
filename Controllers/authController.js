@@ -4,7 +4,8 @@ const User = require('../models/User');
 const UserVerification = require('../models/UserVerification');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
-const path = require("path");
+const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 let transporter = nodemailer.createTransport({
@@ -44,7 +45,7 @@ const sendVerificationEmail = async ({ _id, email, verificationToken }) => {
     userId: _id,
     uniqueString: hashedUniqueString,
     createdAt: Date.now(),
-    expiresAt: Date.now() + 21600000, // 6 valandų galiojimo laikas
+    expiresAt: Date.now() + 21600000, // 6 hours expiration time
   });
 
   await newVerification.save();
@@ -57,7 +58,6 @@ const sendVerificationEmail = async ({ _id, email, verificationToken }) => {
     return { success: false, message: 'Failed to send verification email' };
   }
 };
-
 
 const authController = {
   login: async (req, res) => {
@@ -108,19 +108,19 @@ const authController = {
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
-      const verificationToken = uuidv4(); // Generuojame unikalų patvirtinimo žetoną
+      const verificationToken = uuidv4(); // Generate unique verification token
       const newUser = new User({
         username,
         email,
         password: hashedPassword,
         role: 'user',
         verified: false,
-        verificationToken // Išsaugome žetoną duomenų bazėje
+        verificationToken // Save the token in the database
       });
 
       await newUser.save();
 
-      // Siunčiame patvirtinimo el. laišką
+      // Send verification email
       const { success, message } = await sendVerificationEmail(newUser);
 
       if (!success) {
@@ -166,17 +166,20 @@ const authController = {
       await user.save();
       await UserVerification.deleteOne({ userId });
 
-      const emailVerifiedPath = (path.join(__dirname, "./../views/verified.html"));
-      const emailVerifiedHTML = fs.readFileSync(emailVerifiedPath, 'utf8');
+      const emailVerifiedPath = path.join(__dirname, "./../views/verified.html");
 
-      res.status(200).send(emailVerifiedHTML);
+      fs.readFile(emailVerifiedPath, 'utf8', (err, data) => {
+        if (err) {
+          console.error('Error reading verify.html file:', err);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        res.status(200).send(data);
+      });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
   }
 };
-
-
-
 
 module.exports = authController;

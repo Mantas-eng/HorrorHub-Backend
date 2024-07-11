@@ -5,6 +5,9 @@
     const authMiddleware = require('../middleware/authMiddleware');
     const authorizeAdmin = require('../middleware/authorizeAdmin');
     const favoriteMoviesController = require('../Controllers/favoriteMovieController');
+    const path = require('path');
+    
+    router.use(express.static(path.join(__dirname, '../public')));
 
     router.get('/movies', movieController.getAllMovies);
     router.get('/movies/:id', movieController.getMovieById);
@@ -41,5 +44,9 @@
     });
 
     router.get('/verify/:userId/:uniqueString', authController.verifyEmail);
+
+    router.get('/verify', (req, res) => {
+        res.sendFile(path.join(__dirname, '../public/verified.html'));
+    });
 
     module.exports = router;
