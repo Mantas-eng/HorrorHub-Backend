@@ -166,7 +166,7 @@ const authController = {
       await user.save();
       await UserVerification.deleteOne({ userId });
 
-      const emailVerifiedPath = path.join(__dirname, "./../views/verified.html");
+      const emailVerifiedPath = path.join(__dirname, "./../public/verified.html");
 
       fs.readFile(emailVerifiedPath, 'utf8', (err, data) => {
         if (err) {
