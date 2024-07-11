@@ -4,6 +4,7 @@ const User = require('../models/User');
 const UserVerification = require('../models/UserVerification');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
+const path = require("path");
 require('dotenv').config();
 
 let transporter = nodemailer.createTransport({
@@ -32,7 +33,7 @@ const sendVerificationEmail = async ({ _id, email, verificationToken }) => {
     html: `
       <p>Verify your email address to complete the signup and login into your account.</p>
       <p>This link <b>expires in 6 hours</b>.</p>
-      <p>Press <a href="${currentUrl}/${_id}/${verificationToken}">here</a> to proceed.</p>
+      <p>Press <a href="${currentUrl + "user/verify/"}/${_id}/${verificationToken}">here</a> to proceed.</p>
     `,
   };
 
