@@ -24,7 +24,7 @@ transporter.verify((error, success) => {
 });
 
 const sendVerificationEmail = async ({ _id, email, verificationToken }) => {
-  const currentUrl = 'https://horrorhub-backend-3.onrender.com/VerifyEmailPage';
+  const currentUrl = 'https://horrorhub-backend-3.onrender.com';
   const mailOptions = {
     from: process.env.AUTH_USER,
     to: email,
@@ -165,17 +165,10 @@ const authController = {
       await user.save();
       await UserVerification.deleteOne({ userId });
 
-      const token = jwt.sign(
-        { userId: user._id, role: user.role },
-        process.env.JWT_SECRET,
-        { expiresIn: '1h' }
-      );
+      const emailVerifiedPath = (path.join(__dirname, "./../views/verified.html"));
+      const emailVerifiedHTML = fs.readFileSync(emailVerifiedPath, 'utf8');
 
-      res.status(200).json({
-        message: 'Account verified successfully',
-        token,
-        user: { id: user._id, username: user.username, email: user.email, role: user.role }
-      });
+      res.status(200).send(emailVerifiedHTML);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
