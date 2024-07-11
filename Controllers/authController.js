@@ -25,7 +25,7 @@ transporter.verify((error, success) => {
 });
 
 const sendVerificationEmail = async ({ _id, email, verificationToken }) => {
-  const currentUrl = 'https://horrorhub-backend-3.onrender.com';
+  const currentUrl = 'https://horrorhub-backend-3.onrender.com/verify';
   const mailOptions = {
     from: process.env.AUTH_USER,
     to: email,
@@ -33,7 +33,7 @@ const sendVerificationEmail = async ({ _id, email, verificationToken }) => {
     html: `
       <p>Verify your email address to complete the signup and login into your account.</p>
       <p>This link <b>expires in 6 hours</b>.</p>
-      <p>Press <a href="${currentUrl + "user/verify/"}/${_id}/${verificationToken}">here</a> to proceed.</p>
+      <p>Press <a href="${currentUrl}/${_id}/${verificationToken}">here</a> to proceed.</p>
     `,
   };
 
