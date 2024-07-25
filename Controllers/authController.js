@@ -66,16 +66,16 @@ const authController = {
     try {
       const user = await User.findOne({ email });
       if (!user) {
-        return res.status(404).json({
-          message: 'User with such email not found'
-        });
+        return res.status(404).json({ message: 'User with this email not found' });
+      }
+
+      if (!user.verified) {
+        return res.status(401).json({ message: 'You need to verify your email first.' });
       }
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
-        return res.status(401).json({
-          message: 'Incorrect password'
-        });
+        return res.status(401).json({ message: 'Incorrect password' });
       }
 
       const token = jwt.sign(
@@ -90,9 +90,7 @@ const authController = {
         user: { id: user._id, username: user.username, email: user.email, role: user.role }
       });
     } catch (error) {
-      res.status(500).json({
-        message: error.message
-      });
+      res.status(500).json({ message: error.message });
     }
   },
 
