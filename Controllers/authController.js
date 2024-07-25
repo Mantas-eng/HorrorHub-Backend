@@ -4,8 +4,6 @@ const User = require('../models/User');
 const UserVerification = require('../models/UserVerification');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
-const path = require('path');
-const fs = require('fs');
 require('dotenv').config();
 
 let transporter = nodemailer.createTransport({
@@ -26,7 +24,7 @@ transporter.verify((error, success) => {
 });
 
 const sendVerificationEmail = async ({ _id, email, verificationToken }) => {
-  const currentUrl = 'https://horrorhub-backend-3.onrender.com/verify';
+  const baseUrl = 'https://horrorhub-backend-3.onrender.com/verify'; 
   const mailOptions = {
     from: process.env.AUTH_USER,
     to: email,
@@ -34,7 +32,7 @@ const sendVerificationEmail = async ({ _id, email, verificationToken }) => {
     html: `
       <p>Verify your email address to complete the signup and login into your account.</p>
       <p>This link <b>expires in 6 hours</b>.</p>
-      <p>Press <a href="${currentUrl}/${_id}/${verificationToken}">here</a> to proceed.</p>
+      <p>Press <a href="${baseUrl}/${_id}/${verificationToken}">here</a> to proceed.</p>
     `,
   };
 
@@ -119,7 +117,11 @@ const authController = {
       await newUser.save();
 
       // Send verification email
-      const { success, message } = await sendVerificationEmail(newUser);
+      const { success, message } = await sendVerificationEmail({
+        _id: newUser._id,
+        email: newUser.email,
+        verificationToken
+      });
 
       if (!success) {
         return res.status(500).json({ message });
@@ -137,38 +139,41 @@ const authController = {
   },
 
   verifyEmail: async (req, res) => {
-  const { userId, uniqueString } = req.params;
+    const { userId, uniqueString } = req.params;
 
-  try {
-    const userVerification = await UserVerification.findOne({ userId });
-    if (!userVerification) {
-      return res.status(400).json({ message: 'Invalid or expired verification token' });
-    }
+    try {
+      const userVerification = await UserVerification.findOne({ userId });
+      if (!userVerification) {
+        return res.status(400).json({ message: 'Invalid or expired verification token' });
+      }
 
-    if (userVerification.expiresAt < Date.now()) {
+      // Check if the token has expired
+      if (userVerification.expiresAt < Date.now()) {
+        await UserVerification.deleteOne({ userId });
+        return res.status(400).json({ message: 'Verification token has expired. Please request a new one.' });
+      }
+
+      // Compare the hashed token
+      const isMatch = await bcrypt.compare(uniqueString, userVerification.uniqueString);
+      if (!isMatch) {
+        return res.status(400).json({ message: 'Invalid or expired verification token' });
+      }
+
+      // Verify the user
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(400).json({ message: 'User not found' });
+      }
+
+      user.verified = true;
+      await user.save();
       await UserVerification.deleteOne({ userId });
-      return res.status(400).json({ message: 'Verification token has expired. Please request a new one.' });
+
+      res.status(200).json({ message: 'Email verified successfully' });
+    } catch (error) {
+      res.status(500).json({ message: error.message });
     }
-
-    const isMatch = await bcrypt.compare(uniqueString, userVerification.uniqueString);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid or expired verification token' });
-    }
-
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(400).json({ message: 'User not found' });
-    }
-
-    user.verified = true;
-    await user.save();
-    await UserVerification.deleteOne({ userId });
-
-    res.status(200).json({ message: 'Email verified successfully' });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
   }
-}
 };
 
 module.exports = authController;
