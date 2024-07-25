@@ -169,7 +169,16 @@ const authController = {
       await user.save();
       await UserVerification.deleteOne({ userId });
 
-      res.status(200).json({ message: 'Email verified successfully' });
+      const emailVerifiedPath = path.join(__dirname, "./../public/verified.html");
+
+      fs.readFile(emailVerifiedPath, 'utf8', (err, data) => {
+        if (err) {
+          console.error('Error reading verified.html file:', err);
+          return res.status(500).json({ message: 'Internal server error' });
+        }
+
+        res.status(200).send(data);
+      });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
