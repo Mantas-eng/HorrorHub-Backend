@@ -137,47 +137,38 @@ const authController = {
   },
 
   verifyEmail: async (req, res) => {
-    const { userId, uniqueString } = req.params;
+  const { userId, uniqueString } = req.params;
 
-    try {
-      const userVerification = await UserVerification.findOne({ userId });
-      if (!userVerification) {
-        return res.status(400).json({ message: 'Invalid or expired verification token' });
-      }
-
-      if (userVerification.expiresAt < Date.now()) {
-        await UserVerification.deleteOne({ userId });
-        return res.status(400).json({ message: 'Verification token has expired. Please request a new one.' });
-      }
-
-      const isMatch = await bcrypt.compare(uniqueString, userVerification.uniqueString);
-      if (!isMatch) {
-        return res.status(400).json({ message: 'Invalid or expired verification token' });
-      }
-
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(400).json({ message: 'User not found' });
-      }
-
-      user.verified = true;
-      await user.save();
-      await UserVerification.deleteOne({ userId });
-
-      const emailVerifiedPath = path.join(__dirname, "./../public/verified.html");
-
-      fs.readFile(emailVerifiedPath, 'utf8', (err, data) => {
-        if (err) {
-          console.error('Error reading verify.html file:', err);
-          return res.status(500).json({ message: 'Internal server error' });
-        }
-
-        res.status(200).send(data);
-      });
-    } catch (error) {
-      res.status(500).json({ message: error.message });
+  try {
+    const userVerification = await UserVerification.findOne({ userId });
+    if (!userVerification) {
+      return res.status(400).json({ message: 'Invalid or expired verification token' });
     }
+
+    if (userVerification.expiresAt < Date.now()) {
+      await UserVerification.deleteOne({ userId });
+      return res.status(400).json({ message: 'Verification token has expired. Please request a new one.' });
+    }
+
+    const isMatch = await bcrypt.compare(uniqueString, userVerification.uniqueString);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid or expired verification token' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(400).json({ message: 'User not found' });
+    }
+
+    user.verified = true;
+    await user.save();
+    await UserVerification.deleteOne({ userId });
+
+    res.status(200).json({ message: 'Email verified successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
+}
 };
 
 module.exports = authController;
