@@ -173,6 +173,17 @@ const authController = {
       await user.save();
       await UserVerification.deleteOne({ userId });
 
+      const token = jwt.sign
+      (
+        {
+        userId:user._id, role: user.role},
+        process.env.JWT_SECRET,
+        {
+          expiresIn: '1h'}
+      );
+
+        res.redirect(`https://horrorhub-backend-3.onrender.com/verified?token=${token}`);
+
       // Serve the HTML file
       const emailVerifiedPath = path.join(__dirname, "./../public/verified.html");
 
