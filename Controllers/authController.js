@@ -4,6 +4,8 @@ const User = require('../models/User');
 const UserVerification = require('../models/UserVerification');
 const nodemailer = require('nodemailer');
 const { v4: uuidv4 } = require('uuid');
+const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 let transporter = nodemailer.createTransport({
@@ -169,7 +171,8 @@ const authController = {
       await user.save();
       await UserVerification.deleteOne({ userId });
 
-      const emailVerifiedPath = path.join(__dirname, "./../public/verified.html");
+      // Serve the HTML file
+      const emailVerifiedPath = path.join(__dirname, './../public/verified.html');
 
       fs.readFile(emailVerifiedPath, 'utf8', (err, data) => {
         if (err) {
