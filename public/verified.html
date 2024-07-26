@@ -72,8 +72,10 @@
     const urlParams = new URLSearchParams(queryString);
     const error = urlParams.get("error");
     const message = urlParams.get("message");
-
+      
     const bodyContent = !error
+
+    
       ? `<div style="background-color: #065f46">
       <h2>Email has been verified</h2>
       <svg
@@ -107,7 +109,9 @@
 
       <p>@ToThePointCode</p>
     </div>`;
-
+    setTimeout(() => {
+      window.location.href = 'https://horrorhub-backend-3.onrender.com/movies';
+    }, 3000);
     document.body.style.backgroundColor = error ? "#7F1D1D" : "#064e3b";
     document.body.innerHTML = bodyContent;
   </script>

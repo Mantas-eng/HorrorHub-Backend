@@ -151,19 +151,16 @@ const authController = {
         return res.status(400).json({ message: 'Invalid or expired verification token' });
       }
 
-      // Check if the token has expired
       if (userVerification.expiresAt < Date.now()) {
         await UserVerification.deleteOne({ userId });
         return res.status(400).json({ message: 'Verification token has expired. Please request a new one.' });
       }
 
-      // Compare the hashed token
       const isMatch = await bcrypt.compare(uniqueString, userVerification.uniqueString);
       if (!isMatch) {
         return res.status(400).json({ message: 'Invalid or expired verification token' });
       }
 
-      // Verify the user
       const user = await User.findById(userId);
       if (!user) {
         return res.status(400).json({ message: 'User not found' });
@@ -173,28 +170,16 @@ const authController = {
       await user.save();
       await UserVerification.deleteOne({ userId });
 
-      const token = jwt.sign
-      (
-        {
-        userId:user._id, role: user.role},
+      // Generate JWT token
+      const token = jwt.sign(
+        { userId: user._id, role: user.role },
         process.env.JWT_SECRET,
-        {
-          expiresIn: '1h'}
+        { expiresIn: '1h' }
       );
 
-        res.redirect(`https://horrorhub-backend-3.onrender.com/verified?token=${token}`);
+      // Serve the verified page
+      res.sendFile(path.join(__dirname, "./../public/verified.html"));
 
-      // Serve the HTML file
-      const emailVerifiedPath = path.join(__dirname, "./../public/verified.html");
-
-      fs.readFile(emailVerifiedPath, 'utf8', (err, data) => {
-        if (err) {
-          console.error('Error reading verified.html file:', err);
-          return res.status(500).json({ message: 'Internal server error' });
-        }
-
-        res.status(200).send(data);
-      });
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
