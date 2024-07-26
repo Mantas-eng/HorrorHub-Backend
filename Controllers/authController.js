@@ -26,7 +26,7 @@ transporter.verify((error, success) => {
 });
 
 const sendVerificationEmail = async ({ _id, email, verificationToken }) => {
-  const baseUrl = 'https://horrorhub-backend-3.onrender.com/verify'; 
+  const currentUrl = 'https://horrorhub-backend-3.onrender.com/verify';
   const mailOptions = {
     from: process.env.AUTH_USER,
     to: email,
@@ -34,7 +34,7 @@ const sendVerificationEmail = async ({ _id, email, verificationToken }) => {
     html: `
       <p>Verify your email address to complete the signup and login into your account.</p>
       <p>This link <b>expires in 6 hours</b>.</p>
-      <p>Press <a href="${baseUrl}/${_id}/${verificationToken}">here</a> to proceed.</p>
+      <p>Press <a href="${currentUrl}/${_id}/${verificationToken}">here</a> to proceed.</p>
     `,
   };
 
@@ -66,16 +66,16 @@ const authController = {
     try {
       const user = await User.findOne({ email });
       if (!user) {
-        return res.status(404).json({ message: 'User with this email not found' });
-      }
-
-      if (!user.verified) {
-        return res.status(401).json({ message: 'You need to verify your email first.' });
+        return res.status(404).json({
+          message: 'User with such email not found'
+        });
       }
 
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
-        return res.status(401).json({ message: 'Incorrect password' });
+        return res.status(401).json({
+          message: 'Incorrect password'
+        });
       }
 
       const token = jwt.sign(
@@ -90,7 +90,9 @@ const authController = {
         user: { id: user._id, username: user.username, email: user.email, role: user.role }
       });
     } catch (error) {
-      res.status(500).json({ message: error.message });
+      res.status(500).json({
+        message: error.message
+      });
     }
   },
 
@@ -119,11 +121,7 @@ const authController = {
       await newUser.save();
 
       // Send verification email
-      const { success, message } = await sendVerificationEmail({
-        _id: newUser._id,
-        email: newUser.email,
-        verificationToken
-      });
+      const { success, message } = await sendVerificationEmail(newUser);
 
       if (!success) {
         return res.status(500).json({ message });
@@ -149,19 +147,16 @@ const authController = {
         return res.status(400).json({ message: 'Invalid or expired verification token' });
       }
 
-      // Check if the token has expired
       if (userVerification.expiresAt < Date.now()) {
         await UserVerification.deleteOne({ userId });
         return res.status(400).json({ message: 'Verification token has expired. Please request a new one.' });
       }
 
-      // Compare the hashed token
       const isMatch = await bcrypt.compare(uniqueString, userVerification.uniqueString);
       if (!isMatch) {
         return res.status(400).json({ message: 'Invalid or expired verification token' });
       }
 
-      // Verify the user
       const user = await User.findById(userId);
       if (!user) {
         return res.status(400).json({ message: 'User not found' });
@@ -171,12 +166,11 @@ const authController = {
       await user.save();
       await UserVerification.deleteOne({ userId });
 
-      // Serve the HTML file
-      const emailVerifiedPath = path.join(__dirname, './../public/verified.html');
+      const emailVerifiedPath = path.join(__dirname, "./../public/verified.html");
 
       fs.readFile(emailVerifiedPath, 'utf8', (err, data) => {
         if (err) {
-          console.error('Error reading verified.html file:', err);
+          console.error('Error reading verify.html file:', err);
           return res.status(500).json({ message: 'Internal server error' });
         }
 
