@@ -5,19 +5,20 @@ const movieRoutes = require("./routes/Movies");
 const cors = require("cors");
 const dotenv = require("dotenv");
 
-dotenv.config();
+dotenv.config(); // <-- labai svarbu
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 8080;
 const MONGO_URL = process.env.MONGO_URL;
-require("dotenv").config;
+
 const corsOptions = {
   origin: [
     "http://localhost:3000",
     "https://mantas-eng-horror-hub-front-end.vercel.app",
+    "https://horrorhub.vercel.app", // <-- pridėtas dar vienas
   ],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
@@ -29,7 +30,8 @@ app.prepare().then(() => {
 
   server.use(cors(corsOptions));
   server.use(express.json());
-  server.use(movieRoutes);
+
+  server.use("/api", movieRoutes); // <-- pridėtas prefix
 
   server.all("*", (req, res) => {
     return handle(req, res);
