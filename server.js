@@ -31,7 +31,7 @@ app.prepare().then(() => {
   server.use(cors(corsOptions));
   server.use(express.json());
 
-  server.use("/api", movieRoutes); // <-- pridėtas prefix
+  server.use("/", movieRoutes);
 
   server.all("*", (req, res) => {
     return handle(req, res);
