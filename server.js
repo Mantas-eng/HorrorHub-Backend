@@ -5,7 +5,7 @@ const movieRoutes = require("./routes/Movies");
 const cors = require("cors");
 const dotenv = require("dotenv");
 
-dotenv.config(); // <-- labai svarbu
+dotenv.config();
 
 const dev = process.env.NODE_ENV !== "production";
 const app = next({ dev });
@@ -14,12 +14,23 @@ const handle = app.getRequestHandler();
 const PORT = process.env.PORT || 8080;
 const MONGO_URL = process.env.MONGO_URL;
 
+// ✅ čia visi leistini origin'ai (frontendo domenai + localhost)
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "https://mantas-eng-horror-hub-front-end.vercel.app",
+  "https://horrorhub.vercel.app",
+];
+
 const corsOptions = {
-  origin: [
-    "http://localhost:3000",
-    "https://mantas-eng-horror-hub-front-end.vercel.app",
-    "https://horrorhub.vercel.app", // <-- pridėtas dar vienas
-  ],
+  origin: function (origin, callback) {
+    // leidžiam request'us be origin (pvz., Postman) ir iš sąraše esančių domenų
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("CORS not allowed for this origin: " + origin));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"],
@@ -28,9 +39,11 @@ const corsOptions = {
 app.prepare().then(() => {
   const server = express();
 
+  // CORS turi eiti prieš route'us
   server.use(cors(corsOptions));
   server.use(express.json());
 
+  // 🚀 dabar keliai be /api prefikso → /movies, /login, /register, ...
   server.use("/", movieRoutes);
 
   server.all("*", (req, res) => {
@@ -40,14 +53,14 @@ app.prepare().then(() => {
   mongoose
     .connect(MONGO_URL)
     .then(() => {
-      console.log("Connected to MongoDB");
+      console.log("✅ Connected to MongoDB");
       server.listen(PORT, (err) => {
         if (err) throw err;
-        console.log(`Server is running on port ${PORT}`);
+        console.log(`🚀 Server is running on port ${PORT}`);
       });
     })
     .catch((error) => {
-      console.error("Error connecting to MongoDB:", error);
+      console.error("❌ Error connecting to MongoDB:", error.message);
       process.exit(1);
     });
 
