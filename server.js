@@ -14,7 +14,6 @@ const handle = app.getRequestHandler();
 const PORT = process.env.PORT || 8080;
 const MONGO_URL = process.env.MONGO_URL;
 
-// ✅ čia visi leistini origin'ai (frontendo domenai + localhost)
 const allowedOrigins = [
   "http://localhost:3000",
   "http://127.0.0.1:3000",
@@ -24,7 +23,6 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // leidžiam request'us be origin (pvz., Postman) ir iš sąraše esančių domenų
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -39,13 +37,13 @@ const corsOptions = {
 app.prepare().then(() => {
   const server = express();
 
-  // CORS turi eiti prieš route'us
-  server.use(cors(corsOptions));
+  server.use(cors(corsOptions)); // 👈 labai svarbu: prieš routes
   server.use(express.json());
 
-  // 🚀 dabar keliai be /api prefikso → /movies, /login, /register, ...
-  server.use("/", movieRoutes);
+  // ✅ visi API keliai turi /api prefix
+  server.use("/api", movieRoutes);
 
+  // ✅ kiti keliai eina į Next.js
   server.all("*", (req, res) => {
     return handle(req, res);
   });
