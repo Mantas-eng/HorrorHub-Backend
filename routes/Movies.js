@@ -18,12 +18,7 @@ router.post(
   authorizeAdmin,
   movieController.createMovie
 );
-router.put(
-  "/movies/:id",
-  authMiddleware,
-  authorizeAdmin,
-  movieController.updateMovie
-);
+router.put("/movies/:id", authMiddleware, authorizeAdmin);
 router.delete(
   "/movies/:id",
   authMiddleware,
